@@ -119,6 +119,54 @@ app.put('/api/admin/projects/:id', requireAuth, (req,res) => {
 });
 app.delete('/api/admin/projects/:id', requireAuth, (req,res) => { dbRun('DELETE FROM projects WHERE id=?',[req.params.id]); res.json({success:true}); });
 
+// ── API: AI CHAT ──
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message required' });
+
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+
+  if (!ANTHROPIC_KEY) {
+    // Smart keyword fallback when no API key configured
+    const msg = message.toLowerCase();
+    let reply = "I'm Amasha's portfolio assistant! Feel free to contact Amasha directly via the contact form below.";
+    if (msg.includes('skill') || msg.includes('know') || msg.includes('tech'))
+      reply = "Amasha is skilled in Python (90%), Java (85%), JavaScript (75%), and C++. On the web side: React, Node.js, Express, HTML5, and Tailwind CSS!";
+    else if (msg.includes('project'))
+      reply = "Amasha has built a personal portfolio site, a calculator app, an ML image classifier using TensorFlow, and a data dashboard with React and Python!";
+    else if (msg.includes('contact') || msg.includes('email') || msg.includes('reach'))
+      reply = "You can reach Amasha via the contact form on this page, or via the email and LinkedIn links in the Contact section!";
+    else if (msg.includes('available') || msg.includes('hire') || msg.includes('intern') || msg.includes('job'))
+      reply = "Amasha is actively looking for internships and collaborations! Send a message through the contact form and she'll get back within 24 hours.";
+    else if (msg.includes('gpa') || msg.includes('grade') || msg.includes('study') || msg.includes('university'))
+      reply = "Amasha is a third-year Computer Science student (2023-2026) with a 3.9/4.0 GPA, with strong foundations in algorithms and software engineering!";
+    else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey'))
+      reply = "Hi there! I'm an assistant for Amasha's portfolio. Ask me about her skills, projects, or how to get in touch!";
+    return res.json({ reply });
+  }
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: 'You are an AI assistant for Amasha Jayasinghe portfolio. Answer warmly and concisely (2-3 sentences). Facts: Third-year CS student 2023-2026, GPA 3.9/4.0, Python/Java/JavaScript/C++, React+Node.js, projects: portfolio, calculator, ML classifier, data dashboard. Available for internships.',
+        messages: [{ role: 'user', content: message }]
+      })
+    });
+    const data = await response.json();
+    res.json({ reply: data.content?.[0]?.text || "Please contact Amasha directly via the form!" });
+  } catch {
+    res.json({ reply: "Having a moment! Please reach out via the contact form below." });
+  }
+});
+
 app.get('*', (req,res) => res.sendFile(path.join(__dirname,'../frontend/public/index.html')));
 
 initDB().then(() => {

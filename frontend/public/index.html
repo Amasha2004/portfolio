@@ -943,7 +943,7 @@
     <div class="about-grid">
       <div class="about-img-wrap reveal">
         <div class="about-img-frame">
-          <img src="./images/bg1.png.avif" alt="Amasha Jayasinghe" onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg,#1a1a2e,#16213e)'; this.parentElement.innerHTML += '<div style=\'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5rem\'>👤</div>'">
+          <img src="./images/bg1.png.avif" alt="Amasha Jayasinghe" onerror="this.outerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:6rem;background:linear-gradient(135deg,#1a1a2e,#2d2d5e)\'>👤</div>'">
         </div>
         <div class="about-corner"></div>
         <div class="about-corner2"></div>
@@ -1262,45 +1262,44 @@ function initParticles() {
 }
 initParticles();
 
+let animRunning = true;
 function drawParticles() {
+  if (!animRunning) return;
   ctx.clearRect(0, 0, W, H);
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
   const particleColor = isDark ? '180,190,255' : '60,80,200';
-
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i];
     const dx = mouse.x - p.x, dy = mouse.y - p.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < 100) {
-      p.vx -= (dx / dist) * 0.08;
-      p.vy -= (dy / dist) * 0.08;
-    }
+    if (dist < 100) { p.vx -= (dx / dist) * 0.08; p.vy -= (dy / dist) * 0.08; }
     p.x += p.vx; p.y += p.vy;
     p.vx *= 0.99; p.vy *= 0.99;
     if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
     if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${particleColor}, ${p.opacity})`;
     ctx.fill();
-
     for (let j = i + 1; j < particles.length; j++) {
       const q = particles[j];
       const ex = p.x - q.x, ey = p.y - q.y;
       const ed = Math.sqrt(ex*ex + ey*ey);
       if (ed < 100) {
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(q.x, q.y);
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
         ctx.strokeStyle = `rgba(${particleColor}, ${0.15 * (1 - ed/100)})`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
+        ctx.lineWidth = 0.5; ctx.stroke();
       }
     }
   }
   requestAnimationFrame(drawParticles);
 }
+// Only run canvas when hero is visible - stops browser "loading" spinner
+const heroObserver = new IntersectionObserver(entries => {
+  animRunning = entries[0].isIntersecting;
+  if (animRunning) drawParticles();
+}, { threshold: 0.1 });
+heroObserver.observe(document.getElementById('hero'));
 drawParticles();
 
 // ── THEME TOGGLE ──
@@ -1534,39 +1533,18 @@ async function sendChat() {
   chatInput.value = '';
   addMsg(text, 'user');
   const typing = addMsg('Thinking…', 'typing');
-
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `You are an AI assistant embedded in Amasha Jayasinghe's personal portfolio website. Your role is to answer questions about Amasha in a friendly, professional, first-person-adjacent way (speak about Amasha in third person but be warm and helpful).
-
-Key facts about Amasha:
-- Third-year Computer Science student at University of Example (2023-2026)
-- GPA: 3.9/4.0
-- Skills: Python (90%), Java (85%), JavaScript (75%), C++ (70%)
-- Web: HTML5, CSS3, Tailwind, React.js, Node.js, Express.js
-- Tools: Git/GitHub, Docker, MySQL, MongoDB, VS Code, Linux
-- Projects: Personal Portfolio (HTML+CSS+GSAP), Calculator App (JS), ML Image Classifier (Python/TensorFlow), Data Dashboard (React+Python)
-- Interests: Software development, AI, web technologies
-- Email: amasha@example.com
-- LinkedIn: Amasha Jayasinghe
-- Available for internships and collaborations
-
-Keep replies concise (2-4 sentences). Be enthusiastic and helpful. If asked something you don't know, suggest contacting Amasha directly.`,
-        messages: [{ role: 'user', content: text }]
-      })
+      body: JSON.stringify({ message: text })
     });
     const data = await res.json();
     typing.remove();
-    const reply = data.content?.[0]?.text || "I couldn't get a response. Please try again!";
-    addMsg(reply, 'bot');
+    addMsg(data.reply || "I couldn't get a response. Please try again!", 'bot');
   } catch {
     typing.remove();
-    addMsg("Sorry, I'm having trouble connecting. Please reach out to Amasha directly at amasha@example.com!", 'bot');
+    addMsg("Sorry, I'm having trouble connecting. Please reach out to Amasha directly!", 'bot');
   }
 }
 
