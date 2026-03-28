@@ -440,10 +440,9 @@
       border-radius: 16px;
       padding: 2rem;
       transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-      opacity: 0;
-      transform: translateY(30px);
+      opacity: 1;
     }
-    .skill-card.visible { animation: fadeUp 0.6s ease forwards; }
+    .skill-card.visible { opacity: 1; }
     .skill-card:hover {
       transform: translateY(-4px);
       border-color: var(--primary);
@@ -535,10 +534,9 @@
       overflow: hidden;
       cursor: pointer;
       transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-      opacity: 0;
-      transform: translateY(30px);
+      opacity: 1;
     }
-    .project-card.visible { animation: fadeUp 0.6s ease forwards; }
+    .project-card.visible { opacity: 1; }
     .project-card:hover {
       transform: translateY(-6px);
       border-color: var(--primary);
@@ -865,15 +863,11 @@
       to { opacity: 1; }
     }
     .reveal {
-      opacity: 0;
-      transform: translateY(24px);
+      opacity: 1;
+      transform: none;
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-    /* Safety: show content if CSS animations are disabled or slow */
-    @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1; transform: none; }
-    }
+    .reveal.visible { opacity: 1; transform: none; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
