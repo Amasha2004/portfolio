@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | Amasha Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#111118; --bg3:#1a1a24;
+      --surface:#16161f; --border:rgba(255,255,255,0.07);
+      --text:#e8e8f0; --text2:#9090aa;
+      --primary:#5e6ef7; --accent:#36f0c8;
+      --danger:#ff6b8a; --warn:#f7c948;
+      --card-bg:#13131c;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-thumb{background:var(--primary);border-radius:4px}
+
+    /* ── LOGIN ── */
+    #login-screen{
+      position:fixed;inset:0;background:var(--bg);
+      display:flex;align-items:center;justify-content:center;z-index:9999;
+    }
+    .login-box{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:20px;padding:2.5rem;width:100%;max-width:380px;text-align:center;
+    }
+    .login-box h1{font-size:1.5rem;font-weight:800;margin-bottom:.5rem}
+    .login-box p{color:var(--text2);font-size:.85rem;margin-bottom:1.5rem}
+    .login-box input{
+      width:100%;background:var(--bg3);border:1px solid var(--border);
+      border-radius:10px;padding:.85rem 1rem;color:var(--text);
+      font-family:'Syne',sans-serif;font-size:.9rem;outline:none;margin-bottom:1rem;
+      transition:border-color .2s;
+    }
+    .login-box input:focus{border-color:var(--primary)}
+    .login-box button{
+      width:100%;padding:.85rem;background:var(--primary);color:#fff;
+      border:none;border-radius:10px;font-family:'Syne',sans-serif;
+      font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;
+    }
+    .login-box button:hover{background:#4a5ce0}
+    .login-error{color:var(--danger);font-size:.8rem;margin-top:.5rem;display:none}
+
+    /* ── LAYOUT ── */
+    #app{display:none}
+    .sidebar{
+      position:fixed;left:0;top:0;bottom:0;width:220px;
+      background:var(--bg2);border-right:1px solid var(--border);
+      padding:1.5rem 1rem;display:flex;flex-direction:column;gap:.5rem;
+      z-index:100;
+    }
+    .sidebar-logo{
+      font-family:'Space Mono',monospace;font-size:.9rem;color:var(--accent);
+      padding:.5rem .75rem;margin-bottom:.5rem;
+    }
+    .sidebar-logo span{color:var(--primary)}
+    .nav-item{
+      display:flex;align-items:center;gap:.75rem;padding:.7rem .75rem;
+      border-radius:10px;cursor:pointer;color:var(--text2);font-size:.875rem;font-weight:600;
+      transition:background .2s,color .2s;border:none;background:none;width:100%;text-align:left;
+    }
+    .nav-item:hover,.nav-item.active{background:var(--primary);color:#fff}
+    .nav-item .badge{
+      margin-left:auto;background:var(--danger);color:#fff;
+      font-size:.65rem;padding:.15rem .45rem;border-radius:100px;font-family:'Space Mono',monospace;
+    }
+    .sidebar-footer{margin-top:auto}
+    .main{margin-left:220px;padding:2rem;min-height:100vh}
+
+    /* ── CARDS ── */
+    .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+    .stat-card{
+      background:var(--card-bg);border:1px solid var(--border);border-radius:14px;
+      padding:1.25rem;transition:border-color .2s;
+    }
+    .stat-card:hover{border-color:var(--primary)}
+    .stat-card .icon{font-size:1.5rem;margin-bottom:.5rem}
+    .stat-card .num{font-size:2rem;font-weight:800;font-family:'Space Mono',monospace;color:var(--primary)}
+    .stat-card .label{font-size:.75rem;color:var(--text2);margin-top:.2rem}
+
+    /* ── PAGE SECTIONS ── */
+    .page{display:none}
+    .page.active{display:block}
+    .page-title{font-size:1.5rem;font-weight:800;margin-bottom:1.5rem}
+
+    /* ── TABLE ── */
+    .table-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th{background:var(--bg3);color:var(--text2);font-size:.75rem;font-weight:700;
+       text-transform:uppercase;letter-spacing:.05em;padding:.85rem 1rem;text-align:left}
+    td{padding:.85rem 1rem;border-top:1px solid var(--border);font-size:.875rem;vertical-align:top}
+    tr:hover td{background:rgba(94,110,247,.04)}
+    .msg-unread td:first-child{font-weight:700;color:var(--text)}
+    .msg-subject{color:var(--text2);font-size:.8rem;margin-top:.2rem}
+    .msg-preview{color:var(--text2);font-size:.8rem;margin-top:.3rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* ── BADGES ── */
+    .badge-live{color:var(--accent);background:rgba(54,240,200,.1);border:1px solid var(--accent);font-size:.65rem;padding:.2rem .6rem;border-radius:100px;font-family:'Space Mono',monospace}
+    .badge-wip{color:var(--warn);background:rgba(247,201,72,.1);border:1px solid var(--warn);font-size:.65rem;padding:.2rem .6rem;border-radius:100px;font-family:'Space Mono',monospace}
+    .badge-unread{color:var(--primary);background:rgba(94,110,247,.1);border:1px solid var(--primary);font-size:.65rem;padding:.2rem .5rem;border-radius:100px}
+
+    /* ── ACTION BUTTONS ── */
+    .action-btn{
+      background:none;border:1px solid var(--border);color:var(--text2);
+      padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-size:.75rem;
+      transition:all .2s;font-family:'Syne',sans-serif;
+    }
+    .action-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .action-btn.danger:hover{background:var(--danger);border-color:var(--danger)}
+    .actions{display:flex;gap:.4rem;flex-wrap:wrap}
+
+    /* ── FORM ── */
+    .form-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+    .form-card h3{font-size:1rem;font-weight:700;margin-bottom:1.25rem}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+    .form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+    .form-group label{font-size:.75rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+    .form-group input,.form-group textarea,.form-group select{
+      background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+      padding:.7rem .9rem;color:var(--text);font-family:'Syne',sans-serif;font-size:.875rem;
+      outline:none;transition:border-color .2s;
+    }
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--primary)}
+    .form-group textarea{min-height:90px;resize:vertical}
+    .form-group select option{background:var(--bg2)}
+    .btn-primary{
+      display:inline-flex;align-items:center;gap:.5rem;
+      padding:.65rem 1.5rem;background:var(--primary);color:#fff;
+      border:none;border-radius:8px;font-family:'Syne',sans-serif;
+      font-size:.875rem;font-weight:700;cursor:pointer;transition:background .2s;
+    }
+    .btn-primary:hover{background:#4a5ce0}
+    .btn-danger{background:var(--danger)}
+    .btn-danger:hover{background:#e05070}
+
+    /* ── CHART ── */
+    .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+    .chart-wrap h3{font-size:.9rem;font-weight:700;color:var(--text2);margin-bottom:1rem}
+    .bar-chart{display:flex;align-items:flex-end;gap:.5rem;height:120px}
+    .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+    .bar{width:100%;background:var(--primary);border-radius:4px 4px 0 0;min-height:4px;transition:height .6s ease}
+    .bar-label{font-size:.6rem;color:var(--text2);font-family:'Space Mono',monospace}
+    .bar-val{font-size:.65rem;color:var(--primary);font-family:'Space Mono',monospace}
+
+    /* ── TOAST ── */
+    #toast{
+      position:fixed;bottom:2rem;right:2rem;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:.85rem 1.25rem;
+      font-size:.875rem;z-index:9999;
+      transform:translateY(80px);opacity:0;transition:all .3s;
+      display:flex;align-items:center;gap:.5rem;
+    }
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast.success{border-color:var(--accent);color:var(--accent)}
+    #toast.error{border-color:var(--danger);color:var(--danger)}
+
+    @media(max-width:768px){
+      .sidebar{display:none}
+      .main{margin-left:0}
+      .form-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:2.5rem;margin-bottom:1rem">🔐</div>
+    <h1>Admin Panel</h1>
+    <p>Amasha Jayasinghe · Portfolio</p>
+    <input type="password" id="pw-input" placeholder="Enter admin password" autocomplete="current-password">
+    <button onclick="tryLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">AJ<span>.admin</span></div>
+    <button class="nav-item active" onclick="showPage('dashboard')"><i class="fa fa-dashboard"></i> Dashboard</button>
+    <button class="nav-item" onclick="showPage('messages')"><i class="fa fa-envelope"></i> Messages <span class="badge" id="unread-badge" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showPage('projects')"><i class="fa fa-code"></i> Projects</button>
+    <button class="nav-item" onclick="showPage('analytics')"><i class="fa fa-bar-chart"></i> Analytics</button>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="window.open('/','_blank')"><i class="fa fa-external-link"></i> View Site</button>
+      <button class="nav-item" onclick="logout()"><i class="fa fa-sign-out"></i> Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">👋 Welcome back, Amasha</div>
+      <div class="stat-row" id="stat-row">
+        <div class="stat-card"><div class="icon">👁</div><div class="num" id="stat-total">—</div><div class="label">Total Visits</div></div>
+        <div class="stat-card"><div class="icon">📅</div><div class="num" id="stat-today">—</div><div class="label">Visits Today</div></div>
+        <div class="stat-card"><div class="icon">📬</div><div class="num" id="stat-msgs">—</div><div class="label">Unread Messages</div></div>
+      </div>
+      <div class="chart-wrap">
+        <h3>Visits — Last 7 Days</h3>
+        <div class="bar-chart" id="visits-chart"></div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="page" id="page-messages">
+      <div class="page-title">📬 Messages</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>From</th><th>Subject</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="messages-tbody"><tr><td colspan="5" style="color:var(--text2);text-align:center;padding:2rem">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="page" id="page-projects">
+      <div class="page-title">🚀 Projects</div>
+      <div class="form-card">
+        <h3>Add New Project</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Title</label><input type="text" id="p-title" placeholder="My Project"></div>
+          <div class="form-group"><label>Icon (emoji)</label><input type="text" id="p-icon" placeholder="🚀" maxlength="4"></div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="p-desc" placeholder="What does it do?"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Tech Stack (comma separated)</label><input type="text" id="p-techs" placeholder="React, Node.js, MongoDB"></div>
+          <div class="form-group"><label>Tags (for filter)</label><input type="text" id="p-tags" placeholder="web python tools"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>GitHub URL</label><input type="url" id="p-github" placeholder="https://github.com/..."></div>
+          <div class="form-group"><label>Live Demo URL</label><input type="url" id="p-demo" placeholder="https://..."></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="p-status">
+              <option value="wip">Work in Progress</option>
+              <option value="live">Live</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Sort Order</label><input type="number" id="p-order" value="99" min="1"></div>
+        </div>
+        <button class="btn-primary" onclick="addProject()"><i class="fa fa-plus"></i> Add Project</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Icon</th><th>Title</th><th>Tech</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="projects-tbody"><tr><td colspan="5" style="color:var(--text2);text-align:center;padding:2rem">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="page-title">📊 Analytics</div>
+      <div class="chart-wrap">
+        <h3>Top Pages</h3>
+        <div id="top-pages" style="display:flex;flex-direction:column;gap:.6rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let adminPassword = '';
+
+function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (!pw) return;
+  // Test auth
+  fetch('/api/admin/analytics', { headers: { 'x-admin-password': pw } })
+    .then(r => {
+      if (r.ok) {
+        adminPassword = pw;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadDashboard();
+        loadMessages();
+        loadProjects();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }).catch(() => {
+      document.getElementById('login-error').textContent = 'Cannot connect to server.';
+      document.getElementById('login-error').style.display = 'block';
+    });
+}
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+function logout() { location.reload(); }
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'analytics') loadAnalytics();
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  el.className = 'show ' + type;
+  setTimeout(() => el.className = '', 3000);
+}
+
+async function apiGet(path) {
+  const r = await fetch(path, { headers: { 'x-admin-password': adminPassword } });
+  return r.json();
+}
+async function apiPost(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword }, body: JSON.stringify(body) });
+  return r.json();
+}
+async function apiDelete(path) {
+  const r = await fetch(path, { method: 'DELETE', headers: { 'x-admin-password': adminPassword } });
+  return r.json();
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  const data = await apiGet('/api/admin/analytics');
+  document.getElementById('stat-total').textContent = data.totalVisits;
+  document.getElementById('stat-today').textContent = data.todayVisits;
+  document.getElementById('stat-msgs').textContent = data.unreadMessages;
+  if (data.unreadMessages > 0) {
+    const b = document.getElementById('unread-badge');
+    b.textContent = data.unreadMessages; b.style.display = '';
+  }
+
+  // Bar chart
+  const chart = document.getElementById('visits-chart');
+  chart.innerHTML = '';
+  const days = data.visitsByDay;
+  const max = Math.max(...days.map(d => d.visits), 1);
+  days.forEach(d => {
+    const pct = Math.round((d.visits / max) * 100);
+    const label = d.day.slice(5); // MM-DD
+    chart.innerHTML += `<div class="bar-col">
+      <div class="bar-val">${d.visits}</div>
+      <div class="bar" style="height:${pct}%"></div>
+      <div class="bar-label">${label}</div>
+    </div>`;
+  });
+  if (!days.length) chart.innerHTML = '<div style="color:var(--text2);font-size:.85rem">No visit data yet.</div>';
+}
+
+// ── MESSAGES ──
+async function loadMessages() {
+  const msgs = await apiGet('/api/admin/messages');
+  const tbody = document.getElementById('messages-tbody');
+  if (!msgs.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:2rem">No messages yet.</td></tr>'; return; }
+  tbody.innerHTML = msgs.map(m => `
+    <tr class="${m.read ? '' : 'msg-unread'}" id="msg-${m.id}">
+      <td>
+        <div>${m.name}</div>
+        <div style="color:var(--text2);font-size:.75rem">${m.email}</div>
+      </td>
+      <td>${m.subject || '<em style="color:var(--text2)">No subject</em>'}</td>
+      <td><div style="max-width:260px;color:var(--text2);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.message}</div></td>
+      <td style="color:var(--text2);font-size:.75rem;white-space:nowrap">${new Date(m.created_at).toLocaleDateString()}</td>
+      <td>
+        <div class="actions">
+          ${!m.read ? `<button class="action-btn" onclick="markRead(${m.id})">✓ Read</button>` : '<span style="color:var(--text2);font-size:.75rem">Read</span>'}
+          <button class="action-btn" onclick="replyMsg('${m.email}','${m.name}')"><i class="fa fa-reply"></i></button>
+          <button class="action-btn danger" onclick="deleteMsg(${m.id})"><i class="fa fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function markRead(id) {
+  await fetch('/api/admin/messages/' + id + '/read', { method: 'PATCH', headers: { 'x-admin-password': adminPassword } });
+  document.querySelector('#msg-' + id).classList.remove('msg-unread');
+  toast('Marked as read');
+}
+async function deleteMsg(id) {
+  if (!confirm('Delete this message?')) return;
+  await apiDelete('/api/admin/messages/' + id);
+  document.querySelector('#msg-' + id).remove();
+  toast('Message deleted');
+}
+function replyMsg(email, name) {
+  window.location.href = `mailto:${email}?subject=Re: Your message&body=Hi ${name},%0A%0A`;
+}
+
+// ── PROJECTS ──
+async function loadProjects() {
+  const projects = await apiGet('/api/projects');
+  const tbody = document.getElementById('projects-tbody');
+  if (!projects.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:2rem">No projects yet.</td></tr>'; return; }
+  tbody.innerHTML = projects.map(p => `
+    <tr>
+      <td style="font-size:1.5rem">${p.icon}</td>
+      <td><strong>${p.title}</strong></td>
+      <td style="color:var(--text2);font-size:.8rem">${Array.isArray(p.techs) ? p.techs.join(', ') : p.techs}</td>
+      <td><span class="${p.status === 'live' ? 'badge-live' : 'badge-wip'}">${p.status}</span></td>
+      <td>
+        <div class="actions">
+          <button class="action-btn danger" onclick="deleteProject(${p.id})"><i class="fa fa-trash"></i> Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function addProject() {
+  const title = document.getElementById('p-title').value.trim();
+  const desc = document.getElementById('p-desc').value.trim();
+  const icon = document.getElementById('p-icon').value.trim() || '🚀';
+  const techsRaw = document.getElementById('p-techs').value;
+  const techs = techsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const tags = document.getElementById('p-tags').value.trim();
+  const github_url = document.getElementById('p-github').value.trim();
+  const demo_url = document.getElementById('p-demo').value.trim();
+  const status = document.getElementById('p-status').value;
+  const sort_order = parseInt(document.getElementById('p-order').value) || 99;
+
+  if (!title || !desc) { toast('Title and description required', 'error'); return; }
+
+  const result = await apiPost('/api/admin/projects', { title, description: desc, icon, techs, tags, github_url, demo_url, status, sort_order });
+  if (result.success) {
+    toast('Project added!');
+    ['p-title','p-desc','p-icon','p-techs','p-tags','p-github','p-demo'].forEach(id => document.getElementById(id).value = '');
+    loadProjects();
+  } else {
+    toast('Failed to add project', 'error');
+  }
+}
+
+async function deleteProject(id) {
+  if (!confirm('Delete this project from the site?')) return;
+  await apiDelete('/api/admin/projects/' + id);
+  toast('Project deleted');
+  loadProjects();
+}
+
+// ── ANALYTICS ──
+async function loadAnalytics() {
+  const data = await apiGet('/api/admin/analytics');
+  const container = document.getElementById('top-pages');
+  const max = Math.max(...data.recentVisits.map(v => v.hits), 1);
+  container.innerHTML = data.recentVisits.map(v => `
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.8rem;color:var(--text2);min-width:80px">${v.page || '/'}</div>
+      <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${Math.round(v.hits/max*100)}%;background:var(--primary);height:100%;border-radius:4px;transition:width .6s"></div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--primary);min-width:30px;text-align:right">${v.hits}</div>
+    </div>`).join('') || '<div style="color:var(--text2)">No visit data yet.</div>';
+}
+</script>
+</body>
+</html>
